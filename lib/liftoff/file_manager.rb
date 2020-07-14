@@ -21,7 +21,6 @@ module Liftoff
     def mkdir_gitkeep(path)
       dir_path = File.join(*path)
       FileUtils.mkdir_p(dir_path)
-      FileUtils.touch(File.join(dir_path, '.gitkeep'))
     end
 
     def template_contents(filename)

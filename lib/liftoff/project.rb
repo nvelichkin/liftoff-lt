@@ -2,6 +2,7 @@ module Liftoff
   class Project
     def initialize(configuration)
       @name = configuration.project_name
+      @devname = configuration.project_name + "-Dev"
       @deployment_target = configuration.deployment_target
       @swift_version = configuration.swift_version
       @test_target_name = configuration.test_target_name
@@ -13,6 +14,10 @@ module Liftoff
 
     def app_target
       @app_target ||= new_app_target
+    end
+
+    def dev_app_target
+        @dev_app_target ||= new_dev_app_target
     end
 
     def unit_test_target
@@ -35,6 +40,7 @@ module Liftoff
     def generate_scheme(name)
       scheme = Xcodeproj::XCScheme.new
       scheme.add_build_target(app_target)
+      scheme.add_build_target(dev_app_target)
       scheme.add_test_target(unit_test_target)
       scheme.set_launch_target(app_target)
       if block_given?
@@ -55,6 +61,18 @@ module Liftoff
 
     def new_app_target
       target = xcode_project.new_target(:application, @name, :ios)
+      target.build_configurations.each do |configuration|
+        configuration.build_settings.delete('OTHER_LDFLAGS')
+        configuration.build_settings.delete('IPHONEOS_DEPLOYMENT_TARGET')
+        configuration.build_settings.delete('SKIP_INSTALL')
+        configuration.build_settings.delete('INSTALL_PATH')
+        configuration.build_settings['LD_RUNPATH_SEARCH_PATHS'] = ['$(inherited)', '@executable_path/Frameworks']
+      end
+      target
+    end
+
+    def new_dev_app_target
+      target = xcode_project.new_target(:application, @devname, :ios)
       target.build_configurations.each do |configuration|
         configuration.build_settings.delete('OTHER_LDFLAGS')
         configuration.build_settings.delete('IPHONEOS_DEPLOYMENT_TARGET')
